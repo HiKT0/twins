@@ -9,11 +9,17 @@ twins = {}
 twins.container = require("component").gpu
 
 twins.scw, twins.sch = twins.container.getResolution()
+
 twins.document = {}
 twins.elements = {}
 twins.focus = -1
 
 twins.storage = {}
+twins.sps = require("twins.base.sps")
+
+function twins.wake()
+	twins.scw, twins.sch = twins.container.getResolution()
+end
 
 local function invoke(element, method, ...)
 	if type(element[method]) == "function" then
@@ -25,9 +31,9 @@ function twins.get_focus()
 	return twins.elements[twins.focus]
 end
 
-function twins.render()
+function twins.render(force)
 	for k, v in pairs(twins.elements) do
-		if rawget(v, "changed") then
+		if rawget(v, "changed") or force then
 			invoke(v, "render")
 			rawset(v, "changed", false)
 		end
@@ -115,18 +121,16 @@ local function touch_listener(e_name, addr, x, y, button)
 	for k, v in pairs(twins.elements) do
 		local ex, ey, ew, eh = v.getxywh(v)
 		if x-offx >= ex and x-offx < ex + ew and y-offy >= ey and y-offy < ey + eh then
-			if v.visible then
-				if twins.focus ~= k then
-					local foc_elem = twins.get_focus()
-					if foc_elem then
-						invoke(foc_elem, "onfocus", x-v.x, y-v.y)
-					end
-
-					twins.focus = k
-					invoke(twins.get_focus(), "onfocusloss")
+			if v.visible and twins.focus ~= k then
+				local foc_elem = twins.get_focus()
+				if foc_elem then
+					invoke(foc_elem, "onfocus", x-v.x, y-v.y)
 				end
-				invoke(v, "onclick")
+
+				twins.focus = k
+				invoke(twins.get_focus(), "onfocusloss")
 			end
+			invoke(v, "onclick", {x=x, y=y}, {x=x-v.x, y=y-v.y}, button)
 		end
 	end
 end
@@ -136,6 +140,20 @@ local function key_down_listener(e_name, addr, letter, key)
 	if focus then
 		if focus.visible then
 			invoke(focus, "onkeydown", letter, key)
+		end
+	end
+end
+
+local function scroll_listener(e_name, addr, x, y, size)
+	local offx, offy = 0, 0
+	if twins.container.type == "tornado_vs" then
+		offx = twins.container.internal.x
+		offy = twins.container.internal.y
+	end
+	for k, v in pairs(twins.elements) do
+		local ex, ey, ew, eh = v.getxywh(v)
+		if x-offx >= ex and x-offx < ex + ew and y-offy >= ey and y-offy < ey + eh then
+			invoke(v, "onscroll", {x=x, y=y}, {x=x-v.x, y=y-v.y}, size)
 		end
 	end
 end
@@ -164,26 +182,38 @@ local function shutdown_sequence()
 	end
 end
 
+local kdid, t_id, scr_id
+
+function twins.connect_listeners()
+	kdid = event.listen("key_down", key_down_listener)
+	t_id = event.listen("touch", touch_listener)
+	scr_id = event.listen("scroll", scroll_listener)
+end
+
+function twins.disconnect_listeners()
+	event.cancel(kdid)
+	event.cancel(t_id)
+	event.cancel(scr_id)
+end
+
+
 function twins.main()
-	local kdid = event.listen("key_down", key_down_listener)
-	local t_id = event.listen("touch", touch_listener)
+	twins.connect_listeners()
 	local succ = xpcall(function()
 		twins.clear_screen()
 		while true do
 			twins.render()
-			os.sleep(30)
+			os.sleep(60)
 		end
 	end, function(...) err = debug.traceback(...) end)
-	event.cancel(kdid)
-	event.cancel(t_id)
+	twins.disconnect_listeners()
 	shutdown_sequence()
 	if not succ then error(err) end
 end
 
 function twins.main_coroutine()
 	twins.running = true
-	local kdid = event.listen("key_down", key_down_listener)
-	local t_id = event.listen("touch", touch_listener)
+	twins.connect_listeners()
 	local succ, err = xpcall(function()
 		twins.clear_screen()
 		while twins.running do
@@ -191,8 +221,7 @@ function twins.main_coroutine()
 			coroutine.yield()
 		end
 	end, function(...) err = debug.traceback(...) end)
-	event.cancel(kdid)
-	event.cancel(t_id)
+	twins.disconnect_listeners()
 	twins.clear_screen(twins.document.destroy_color)
 	shutdown_sequence()
 	if not succ then error(err) end

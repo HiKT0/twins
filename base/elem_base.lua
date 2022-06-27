@@ -1,5 +1,6 @@
 local unicode = require "unicode"
 local event = require "event"
+local serialization = require "serialization"
 local elem_base = {
 	button = {
 		x = 1, y = 1,
@@ -21,8 +22,10 @@ local elem_base = {
 		w = 10, h = 1,
 		text = "text",
 		fgcolor = 0xffffff,
+		bgcolor = 0x000000,
 		render = function(v)
 			twins.container.setForeground(v.fgcolor)
+			twins.container.setBackground(v.bgcolor)
 			local text = unicode.sub(tostring(v.text), 1, v.w)
 			text = text .. string.rep(" ", v.w-unicode.len(text))
 			twins.container.set(v.x, v.y, text)
@@ -124,6 +127,12 @@ local elem_base = {
 					v.view = v.view - 1
 				end
 				v.render(v)
+			end,
+			[13] =
+			function(v, let, key)
+				if v.onconfirm then
+					v.onconfirm(v)
+				end
 			end
 		},
 		ovr_keys = {
@@ -183,6 +192,62 @@ local elem_base = {
 			twins.container.setBackground(v.bgcolor)
 			twins.container.setForeground(v.fgcolor)
 			twins.draw_frame(v)
+		end
+	},
+	list = {
+		x = 1, y = 1,
+		w = 10, h = 10,
+		bgcolor = 0x000000,
+		fgcolor = 0xffffff,
+		sel_color = 0x666666,
+		selection = -1,
+		items = {},
+		scroll_size = 3,
+		scroll = 0,
+		get_value = function(v) return v.items[v.selection] end,
+		render = function(v)
+			twins.container.setBackground(v.bgcolor)
+			twins.container.setForeground(v.fgcolor)
+			local line = 0
+			if v.scroll > 0 then
+				twins.container.set(v.x, v.y+line, "..."..(" "):rep(v.w-3))
+				line = line + 1
+			end
+			for k=v.scroll+1, #v.items do
+				local i = v.items[k]
+				local wspace = (" "):rep(v.w-unicode.len(i))
+				if v.selection-v.scroll == line+1 then
+					twins.container.setBackground(v.sel_color)
+					twins.container.set(v.x, v.y+line, tostring(i)..wspace)
+					twins.container.setBackground(v.bgcolor)
+				else
+					twins.container.set(v.x, v.y+line, tostring(i)..wspace)
+				end
+				line = line + 1
+				if line == v.h-1 then
+					twins.container.set(v.x, v.y+line, "..."..(" "):rep(v.w-3))
+					return
+				end
+			end
+			local wspace = (" "):rep(v.w)
+			for i=line, v.h-1 do
+				twins.container.set(v.x, v.y+i, wspace)
+			end
+		end,
+		onclick = function(v, pabs, prel, button)
+			if prel.y+v.scroll+1 <= #v.items+1 then
+				v.selection = prel.y+v.scroll+1
+				if v.onmodify then
+					v.onmodify(v)
+				end
+			end
+			v.render(v)
+		end,
+		onscroll = function(v, pabs, prel, size)
+			v.scroll = v.scroll - size*v.scroll_size
+			if v.scroll > #v.items-v.scroll_size then v.scroll = #v.items-v.scroll_size end
+			if v.scroll < 0 then v.scroll = 0 end
+			v.render(v)
 		end
 	}
 }
