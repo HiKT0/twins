@@ -42,15 +42,19 @@ f.write(out[:-1] + "}\n")
 f.write(
 """
 for k, v in pairs(pkg) do
-    if not fs.isDirectory(fs.path(v)) then
-        fs.createDirectory(fs.path(v))
+    local dir = fs.path(k)
+    if (not fs.isDirectory(dir)) or (not fs.exists(dir)) then
+        print("Создание папки: "..dir)
+        fs.makeDirectory(dir)
     end
-        
-    local f = io.open(v, "w")
+    print("Распаковка: "..k)
+    local f, e = io.open(k, "w")
+    if not f then error(e) end
     f:write(v)
     f:flush()
     f:close()
 end
+
 """
 )
 f.close()

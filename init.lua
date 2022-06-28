@@ -1,8 +1,3 @@
---[[ Цифровая лицензия
-Данный файл запривачен HiKTO
-Идите нахуй
-]]
-
 local event = require("event")
 
 twins = {}
@@ -111,7 +106,6 @@ function twins.draw_frame(elem)
 	twins.container.fill(elem.x+1, elem.y+elem.h-1, elem.w-2, 1, "─")
 end
 
--- touch addr x y button
 local function touch_listener(e_name, addr, x, y, button)
 	local offx, offy = 0, 0
 	if twins.container.type == "tornado_vs" then
