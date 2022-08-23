@@ -1,4 +1,5 @@
 local event = require("event")
+local computer = require("computer")
 
 twins = {}
 twins.container = require("component").gpu
@@ -64,15 +65,39 @@ function twins.add_element(element)
 			})
 			twins.elements[i] = element
 			twins.elements[i]._id = i
-			twins.elements[i].visible = twins.elements[i].visible or true
+			if twins.elements[i].clickable == nil then twins.elements[i].clickable = true end
+			if twins.elements[i].visible == nil then twins.elements[i].visible = true end
 			invoke(twins.elements[i], "oncreate")
 			return twins.elements[i]
 		end
 	end
 end
 
-function twins.load_elements(module_name, load_as)
-	local mod, err = require(module_name)
+function twins.load_elements(module_name, load_as, load_only)
+	
+	local succ, mod
+	if not load_only then
+		succ, mod = pcall(require, module_name)
+		local err
+		if not succ then
+			succ, mod = pcall(function()
+				local code, err = loadfile(module_name)
+				assert(code, err)
+				return code()
+			end)
+		end
+	else
+		succ, mod = pcall(function()
+			local code, err = loadfile(module_name)
+			assert(code, err)
+			return code()
+		end)
+	end
+
+	if not mod then error("Файл не может быть найден.") end
+	if type(mod) == "string" then
+		error(mod)
+	end
 	twins[load_as] = {}
 	for elem_name, elem_content in pairs(mod) do
 		twins[load_as][elem_name] = 
@@ -100,10 +125,13 @@ function twins.draw_frame(elem)
 	twins.container.set(elem.x, elem.y+elem.h-1, "└")
 	twins.container.set(elem.x+elem.w-1, elem.y+elem.h-1, "┘")
 
-	twins.container.fill(elem.x, elem.y+1, 1, elem.h-2, "│")
-	twins.container.fill(elem.x+elem.w-1, elem.y+1, 1, elem.h-2, "│")
-	twins.container.fill(elem.x+1, elem.y, elem.w-2, 1, "─")
-	twins.container.fill(elem.x+1, elem.y+elem.h-1, elem.w-2, 1, "─")
+	local vl = ("│"):rep(elem.h-2)
+	local hl = ("─"):rep(elem.w-2)
+
+	twins.container.set(elem.x, elem.y+1, vl, true)
+	twins.container.set(elem.x+elem.w-1, elem.y+1, vl, true)
+	twins.container.set(elem.x+1, elem.y, hl)
+	twins.container.set(elem.x+1, elem.y+elem.h-1, hl)
 end
 
 local function touch_listener(e_name, addr, x, y, button)
@@ -114,7 +142,7 @@ local function touch_listener(e_name, addr, x, y, button)
 	end
 	for k, v in pairs(twins.elements) do
 		local ex, ey, ew, eh = v.getxywh(v)
-		if x-offx >= ex and x-offx < ex + ew and y-offy >= ey and y-offy < ey + eh then
+		if x-offx >= ex and x-offx < ex + ew and y-offy >= ey and y-offy < ey + eh and v.clickable then
 			if v.visible and twins.focus ~= k then
 				local foc_elem = twins.get_focus()
 				if foc_elem then
@@ -131,6 +159,7 @@ end
 
 local function key_down_listener(e_name, addr, letter, key)
 	local focus = twins.get_focus()
+	invoke(twins.document, "onkeydown", letter, key)
 	if focus then
 		if focus.visible then
 			invoke(focus, "onkeydown", letter, key)
@@ -159,7 +188,7 @@ function twins.clear_screen(color)
 	twins.container.fill(1, 1, twins.scw, twins.sch, " ")
 end
 
-twins.load_elements("twins.base.elem_base", "base")
+twins.load_elements("/lib/twins/base/elem_base.lua", "base", true)
 
 function twins.clear_elements()
 	twins.elements = {}
@@ -190,19 +219,31 @@ function twins.disconnect_listeners()
 	event.cancel(scr_id)
 end
 
+function twins.euthanize()
+	twins.running = false
+	computer.pushSignal("twins_term", 1)
+end
+
+function twins.sleep(timeout)
+	local deadline = computer.uptime() + (timeout or 0)
+	repeat
+		local sig = event.pull(deadline - computer.uptime())
+	until computer.uptime() >= deadline or sig == "twins_term"
+end
 
 function twins.main()
+	twins.running = true
 	twins.connect_listeners()
 	local succ = xpcall(function()
 		twins.clear_screen()
-		while true do
+		while twins.running do
 			twins.render()
-			os.sleep(60)
+			twins.sleep(60)
 		end
 	end, function(...) err = debug.traceback(...) end)
 	twins.disconnect_listeners()
 	shutdown_sequence()
-	if not succ then error(err) end
+	if not succ then error(err, 3) end
 end
 
 function twins.main_coroutine()
@@ -218,7 +259,7 @@ function twins.main_coroutine()
 	twins.disconnect_listeners()
 	twins.clear_screen(twins.document.destroy_color)
 	shutdown_sequence()
-	if not succ then error(err) end
+	if not succ then error(err, 3) end
 end
 
 return twins

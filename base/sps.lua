@@ -15,26 +15,38 @@ function sps.center(e, mode)
 end
 
 function sps.right(e)
-	local rx = twins.scw-e.w
+	local rx = twins.scw-e.w-1
 	e.x = rx
+	if e.calculate_positions then
+		e:calculate_positions()
+	end
 	return e, rx
 end
 
 function sps.left(e)
 	local lx = 1
 	e.x = lx
+	if e.calculate_positions then
+		e:calculate_positions()
+	end
 	return e, lx
 end
 
 function sps.up(e)
 	local uy = 1
 	e.y = uy
+	if e.calculate_positions then
+		e:calculate_positions()
+	end
 	return e, uy
 end
 
 function sps.down(e)
 	local dy = twins.sch-e.h
 	e.y = dy
+	if e.calculate_positions then
+		e:calculate_positions()
+	end
 	return e, dy
 end
 
@@ -46,6 +58,9 @@ local function pos_list(list, dir, fun)
 			fun(e)
 			e.y = ly
 			ly = ly + e.h
+			if e.calculate_positions then
+				e:calculate_positions()
+			end
 		end
 	else
 		local ly = twins.sch
@@ -53,23 +68,34 @@ local function pos_list(list, dir, fun)
 			ly = ly - e.h
 			fun(e)
 			e.y = ly
+			if e.calculate_positions then
+				e:calculate_positions()
+			end
 		end
 	end
 	return list
 end
 
 function sps.right_list(list, dir)
-	pos_list(list, dir, sps.right)
+	return pos_list(list, dir, sps.right)
 end
 
 function sps.left_list(list, dir)
-	pos_list(list, dir, sps.left)
+	return pos_list(list, dir, sps.left)
+end
+
+function sps.center_list(list, dir)
+	return pos_list(list, dir, sps.center)
 end
 
 function sps.position(attr, e)
 	for fun in attr:gmatch("[%w_]+") do
 		if type(sps[fun]) == "function" then sps[fun](e) end
 	end
+	if e.calculate_positions then
+		e:calculate_positions()
+	end
+	return e
 end
 
 return sps

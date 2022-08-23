@@ -8,13 +8,12 @@ local elem_base = {
 		bgcolor = 0x222222,
 		fgcolor = 0xffffff,
 		text = "button",
-		render = function(v)
-			twins.container.setBackground(v.bgcolor)
-			twins.container.setForeground(v.fgcolor)
-			twins.container.fill(v.x, v.y, v.w, v.h, " ")
-			twins.draw_frame(v)
-			twins.container.set(v.x+v.w/2-unicode.len(v.text)/2, v.y+v.h/2, v.text)
-			twins.container.setBackground(0x000000)
+		render = function(self)
+			twins.container.setBackground(self.bgcolor)
+			twins.container.setForeground(self.fgcolor)
+			twins.container.fill(self.x, self.y, self.w, self.h, " ")
+			twins.draw_frame(self)
+			twins.container.set(self.x+self.w/2-unicode.len(self.text)/2, self.y+self.h/2, self.text)
 		end
 	},
 	text = {
@@ -23,12 +22,12 @@ local elem_base = {
 		text = "text",
 		fgcolor = 0xffffff,
 		bgcolor = 0x000000,
-		render = function(v)
-			twins.container.setForeground(v.fgcolor)
-			twins.container.setBackground(v.bgcolor)
-			local text = unicode.sub(tostring(v.text), 1, v.w)
-			text = text .. string.rep(" ", v.w-unicode.len(text))
-			twins.container.set(v.x, v.y, text)
+		render = function(self)
+			twins.container.setForeground(self.fgcolor)
+			twins.container.setBackground(self.bgcolor)
+			local text = unicode.sub(tostring(self.text), 1, self.w)
+			text = text .. string.rep(" ", self.w-unicode.len(text))
+			twins.container.set(self.x, self.y, text)
 		end
 	},
 	checkbox = {
@@ -37,17 +36,19 @@ local elem_base = {
 		active_color = 0x00ff48,
 		active = false,
 		bgcolor = 0x000000,
-		render = function(v)
-			twins.container.setBackground(v.bgcolor)
-			twins.draw_frame(v)
-			if v.active then 
-				twins.container.setBackground(v.active_color)
+		fgcolor = 0xffffff,
+		render = function(self)
+			twins.container.setForeground(self.fgcolor)
+			twins.container.setBackground(self.bgcolor)
+			twins.draw_frame(self)
+			if self.active then 
+				twins.container.setBackground(self.active_color)
 			end
-			twins.container.set(v.x+1, v.y+1, "  ")
+			twins.container.set(self.x+1, self.y+1, "  ")
 		end,
-		onclick = function(v)
-			v.active = not v.active
-			v.render(v)
+		onclick = function(self)
+			self.active = not self.active
+			self.render(self)
 		end
 	},
 	input = {
@@ -61,126 +62,128 @@ local elem_base = {
 		allowed_chars = "",
 		text="",
 		password=false,
-		render = function(v)
-			while v.cursor-v.view > v.w-1 do
-				v.view = v.view + 1
+		render = function(self)
+			while self.cursor-self.view > self.w-1 do
+				self.view = self.view + 1
 			end
-			while v.cursor-v.view < 0 do
-				v.view = v.view - 1
+			while self.cursor-self.view < 0 do
+				self.view = self.view - 1
 			end
-			if v.view < 1 then v.view = 1 end
-			twins.container.setBackground(v.bgcolor)
-			twins.container.setForeground(v.fgcolor)
-			twins.container.set(v.x, v.y+v.h-1, string.rep("─", v.w))
-			local text = unicode.sub(tostring(v.text), v.view, v.view+v.w-1)
+			if self.view < 1 then self.view = 1 end
+			twins.container.setBackground(self.bgcolor)
+			twins.container.setForeground(self.fgcolor)
+			twins.container.set(self.x, self.y+self.h-1, string.rep("─", self.w))
+			local text = unicode.sub(tostring(self.text), self.view, self.view+self.w-1)
 
-			if v.password then
+			if self.password then
 				text = string.rep("*", unicode.len(text))
 			end
 
-			text = text .. string.rep(" ", v.w - unicode.len(text))
-			twins.container.set(v.x, v.y, text)
+			text = text .. string.rep(" ", self.w - unicode.len(text))
+			twins.container.set(self.x, self.y, text)
 		end,
-		draw_cursor = function(v)
-			v.blinker_state = (v.blinker_state + 1) % 2
-			local glob_cur_pos = v.cursor-v.view+v.x
-
-			if v.blinker_state == 0 then
-				local cur_char = twins.container.get(glob_cur_pos, v.y)
-				twins.container.setBackground(v.bgcolor)
-				twins.container.setForeground(v.fgcolor)
-				twins.container.set(glob_cur_pos, v.y, cur_char)
+		draw_cursor = function(self)
+			self.blinker_state = (self.blinker_state + 1) % 2
+			local glob_cur_pos = self.cursor-self.view+self.x
+			if self.blinker_state == 0 then
+				local cur_char = twins.container.get(glob_cur_pos, self.y)
+				twins.container.setBackground(self.bgcolor)
+				twins.container.setForeground(self.fgcolor)
+				twins.container.set(glob_cur_pos, self.y, cur_char)
 			else
-				if twins.focus == v._id then
-					local cur_char = twins.container.get(glob_cur_pos, v.y)
-					twins.container.setBackground(v.fgcolor)
-					twins.container.setForeground(v.bgcolor)
-					twins.container.set(glob_cur_pos, v.y, cur_char)
+				if twins.focus == self._id then
+					local cur_char = twins.container.get(glob_cur_pos, self.y)
+					twins.container.setBackground(self.fgcolor)
+					twins.container.setForeground(self.bgcolor)
+					twins.container.set(glob_cur_pos, self.y, cur_char)
 				end
 			end
 		end,
-		onclick = function(v)
-			if v.cursor > unicode.len(v.text) + 1 then
-				v.cursor = unicode.len(v.text) + 1
+		onclick = function(self)
+			if self.cursor > unicode.len(self.text) + 1 then
+				self.cursor = unicode.len(self.text) + 1
 			end
-			if v.cursor < 1 then
-				v.cursor = 1
+			if self.cursor < 1 then
+				self.cursor = 1
 			end
-			v.draw_cursor(v) 
+			self.draw_cursor(self) 
 		end,
-		oncreate = function(v)
-			v.blinker_t = event.timer(0.5, 
+		oncreate = function(self)
+			self.blinker_t = event.timer(0.5, 
 				function()
-					v.draw_cursor(v)
+					self.draw_cursor(self)
 				end,
 				math.huge)
+			self.cursor = unicode.len(self.text) + 1
 		end,
-		ondestroy = function(v)
-			event.cancel(v.blinker_t)
+		ondestroy = function(self)
+			event.cancel(self.blinker_t)
 		end,
 		ovr_lets = {
 			[8] = 
-			function(v, let, key)
-				v.text = unicode.sub(v.text, 1, v.cursor-2) .. unicode.sub(v.text, v.cursor, unicode.len(v.text))
-				v.cursor = v.cursor - 1
-				while v.cursor-v.view < 1 do
-					v.view = v.view - 1
+			function(self, let, key)
+				self.text = unicode.sub(self.text, 1, self.cursor-2) .. unicode.sub(self.text, self.cursor, unicode.len(self.text))
+				self.cursor = self.cursor - 1
+				if self.cursor < 1 then
+					self.cursor = 1
 				end
-				v.render(v)
+				while self.cursor-self.view < 1 do
+					self.view = self.view - 1
+				end
+				self.render(self)
 			end,
 			[13] =
-			function(v, let, key)
-				if v.onconfirm then
-					v.onconfirm(v)
+			function(self, let, key)
+				if self.onconfirm then
+					self.onconfirm(self)
 				end
 			end
 		},
 		ovr_keys = {
 			[203] =
-			function(v, let, key)
-				v.cursor = v.cursor - 1
-				if v.cursor < 1 then
-					v.cursor = 1
+			function(self, let, key)
+				self.cursor = self.cursor - 1
+				if self.cursor < 1 then
+					self.cursor = 1
 				end
-				v.render(v)
+				self.render(self)
 			end,
 			[205] =
-			function(v, let, key)
-				v.cursor = v.cursor + 1
-				if v.cursor > unicode.len(v.text) + 1 then
-					v.cursor = unicode.len(v.text) + 1
+			function(self, let, key)
+				self.cursor = self.cursor + 1
+				if self.cursor > unicode.len(self.text) + 1 then
+					self.cursor = unicode.len(self.text) + 1
 				end
-				v.render(v)
+				self.render(self)
 			end
 		},
-		onmodify = function(v) end,
-		typechar = function(v, let, key)
-			v.text = (unicode.sub(v.text, 1, v.cursor-1) ..
+		typechar = function(self, let, key)
+			self.text = (unicode.sub(self.text, 1, self.cursor-1) ..
 				unicode.char(let) .. 
-				unicode.sub(v.text, v.cursor, unicode.len(v.text))
+				unicode.sub(self.text, self.cursor, unicode.len(self.text))
 				)
-			v.cursor = v.cursor + 1
-			v.render(v)
+			self.cursor = self.cursor + 1
+			self.render(self)
 
-			if v.onmodify then v.onmodify(v) end
+			if self.onmodify then self.onmodify(self) end
 		end,
-		onkeydown = function(v, let, key)
-			if v.ovr_lets[let] then
-				v.ovr_lets[let](v, let, key)
-				if v.onmodify then v.onmodify(v) end
-			elseif v.ovr_keys[key] then
-				v.ovr_keys[key](v, let, key)
-				if v.onmodify then v.onmodify(v) end
+		onkeydown = function(self, let, key)
+			if self.ovr_lets[let] then
+				self.ovr_lets[let](self, let, key)
+				if self.onmodify then self.onmodify(self) end
+			elseif self.ovr_keys[key] then
+				self.ovr_keys[key](self, let, key)
+				if self.onmodify then self.onmodify(self) end
 			else
 				if let > 31 then
-					if v.allowed_chars:len() == 0 or v.allowed_chars:find(string.char(let)) then
-						v.typechar(v, let, key)
+					if self.allowed_chars:len() == 0 or self.allowed_chars:find(string.char(let)) then
+						self.typechar(self, let, key)
 					end
 				end
 			end
-			if v.cursor < 1 then v.cursor = 1 end
-			v.blinker_state = 0
-			v.draw_cursor(v)
+			if self.cursor < 1 then self.cursor = 1 end
+			self.blinker_state = 0
+			self.draw_cursor(self)
 		end
 	},
 	frame = {
@@ -188,10 +191,10 @@ local elem_base = {
 		w = 10, h = 10,
 		bgcolor = 0x000000,
 		fgcolor = 0xffffff,
-		render = function(v)
-			twins.container.setBackground(v.bgcolor)
-			twins.container.setForeground(v.fgcolor)
-			twins.draw_frame(v)
+		render = function(self)
+			twins.container.setBackground(self.bgcolor)
+			twins.container.setForeground(self.fgcolor)
+			twins.draw_frame(self)
 		end
 	},
 	list = {
@@ -204,51 +207,178 @@ local elem_base = {
 		items = {},
 		scroll_size = 3,
 		scroll = 0,
-		get_value = function(v) return v.items[v.selection] end,
-		render = function(v)
-			twins.container.setBackground(v.bgcolor)
-			twins.container.setForeground(v.fgcolor)
+		get_value = function(self) return self.items[self.selection] end,
+		render = function(self)
+			twins.container.setBackground(self.bgcolor)
+			twins.container.setForeground(self.fgcolor)
 			local line = 0
-			if v.scroll > 0 then
-				twins.container.set(v.x, v.y+line, "..."..(" "):rep(v.w-3))
+			if self.scroll > 0 then
+				twins.container.set(self.x, self.y+line, "..."..(" "):rep(self.w-3))
 				line = line + 1
 			end
-			for k=v.scroll+1, #v.items do
-				local i = v.items[k]
-				local wspace = (" "):rep(v.w-unicode.len(i))
-				if v.selection-v.scroll == line+1 then
-					twins.container.setBackground(v.sel_color)
-					twins.container.set(v.x, v.y+line, tostring(i)..wspace)
-					twins.container.setBackground(v.bgcolor)
+			for k=self.scroll+1, #self.items do
+				local i = self.items[k]
+				local wspace = (" "):rep(self.w-unicode.len(i))
+				if self.selection-self.scroll == line+1 then
+					twins.container.setBackground(self.sel_color)
+					twins.container.set(self.x, self.y+line, tostring(i)..wspace)
+					twins.container.setBackground(self.bgcolor)
 				else
-					twins.container.set(v.x, v.y+line, tostring(i)..wspace)
+					twins.container.set(self.x, self.y+line, tostring(i)..wspace)
 				end
 				line = line + 1
-				if line == v.h-1 then
-					twins.container.set(v.x, v.y+line, "..."..(" "):rep(v.w-3))
+				if line == self.h-1 then
+					twins.container.set(self.x, self.y+line, "..."..(" "):rep(self.w-3))
 					return
 				end
 			end
-			local wspace = (" "):rep(v.w)
-			for i=line, v.h-1 do
-				twins.container.set(v.x, v.y+i, wspace)
+			local wspace = (" "):rep(self.w)
+			for i=line, self.h-1 do
+				twins.container.set(self.x, self.y+i, wspace)
 			end
 		end,
-		onclick = function(v, pabs, prel, button)
-			if prel.y+v.scroll+1 <= #v.items+1 then
-				v.selection = prel.y+v.scroll+1
-				if v.onmodify then
-					v.onmodify(v)
+		onclick = function(self, pabs, prel, button)
+			if prel.y+self.scroll+1 <= #self.items+1 then
+				self.selection = prel.y+self.scroll+1
+				if self.onmodify then
+					self.onmodify(self)
 				end
 			end
-			v.render(v)
+			self.render(self)
 		end,
-		onscroll = function(v, pabs, prel, size)
-			v.scroll = v.scroll - size*v.scroll_size
-			if v.scroll > #v.items-v.scroll_size then v.scroll = #v.items-v.scroll_size end
-			if v.scroll < 0 then v.scroll = 0 end
-			v.render(v)
+		onscroll = function(self, pabs, prel, size)
+			self.scroll = self.scroll - size*self.scroll_size
+			if self.scroll > #self.items-self.scroll_size then self.scroll = #self.items-self.scroll_size end
+			if self.scroll < 0 then self.scroll = 0 end
+			self.render(self)
 		end
+	},
+	group = {
+		x = 1, y = 1,
+		w = 10, h = 0,
+		bgcolor = 0x000000,
+		fgcolor = 0xffffff,
+		clickable = false,
+		visible = false,
+		linked_frame = nil,
+		framed = false,
+		gap = 1,
+		direction = "horizontal",
+		items={},
+		padding = {left=0, right=0, up=0, down=0},
+		calculate_positions = function(self)
+			if self.direction == "horizontal" or self.direction == "h" then
+				local dx = self.padding.left
+				local h_max = 0
+				for k, v in ipairs(self.items) do
+					v.y = self.y + (v.off_y or 0) + self.padding.up
+					v.x = self.x + dx + (v.off_x or 0)
+					if v.calculate_positions then
+						v:calculate_positions()
+					end
+					h_max = math.max(h_max, v.h)
+					dx = dx + v.w + self.gap
+				end
+				self.w = dx - self.gap + self.padding.right
+				self.h = h_max + self.padding.down + self.padding.up
+			elseif self.direction == "vertical" or self.direction == "v" then
+				local dy = self.padding.up
+				local w_max = 0
+				for k, v in ipairs(self.items) do
+					v.y = self.y + dy + (v.off_y or 0)
+					v.x = self.x + 1 + (v.off_x or 0)
+					if v.calculate_positions then
+						v:calculate_positions()
+					end
+					w_max = math.max(w_max, v.w)
+					dy = dy + v.h + self.gap
+					
+				end
+				self.w = w_max + self.padding.right + self.padding.left
+				self.h = dy - self.gap + self.padding.down
+			end
+			if self.linked_frame then
+				self.linked_frame.x = self.x
+				self.linked_frame.y = self.y
+				self.linked_frame.w = self.w
+				self.linked_frame.h = self.h
+			end
+		end,
+		render = function(self) end,
+		oncreate = function(self)
+			if self.framed then
+				self.padding = {left=1, right=1, up=1, down=1}
+			end
+			self:calculate_positions()
+			if self.framed and self.linked_frame == nil then
+					self.linked_frame = twins.base.frame({
+					x=self.x, 
+					y=self.y, 
+					w=self.w, 
+					h=self.h, 
+					fgcolor=self.fgcolor, 
+					bgcolor=self.bgcolor,
+					clickable=false
+				})
+			end
+		end
+	},
+	radio_button = {
+		x = 1, y = 1,
+		w = 10, h = 3,
+		bgcolor = 0x222222,
+		active_bgcolor = 0x666666,
+		active_fgcolor = 0xffffff,
+		fgcolor = 0xffffff,
+		active = false,
+		radio_channel = 1,
+		text = "button",
+		set_channel = function(self, channel)
+			local channel_arr = twins.radio_channel[self.radio_channel]
+			for i = 1, #channel_arr do
+				if channel_arr[i] == self then
+					table.remove(channel_arr, i)
+				end
+			end
+			self.radio_channel = channel
+			self:oncreate()
+		end,
+		render = function(self)
+			if self.active then
+				twins.container.setBackground(self.active_bgcolor)
+				twins.container.setForeground(self.active_fgcolor)
+			else
+				twins.container.setBackground(self.bgcolor)
+				twins.container.setForeground(self.fgcolor)
+			end
+			twins.container.fill(self.x, self.y, self.w, self.h, " ")
+			twins.draw_frame(self)
+			twins.container.set(self.x+self.w/2-unicode.len(self.text)/2, self.y+self.h/2, self.text)
+		end,
+		oncreate = function(self)
+			twins.radio_channel = twins.radio_channel or {}
+			if twins.radio_channel[self.radio_channel] == nil then
+				twins.radio_channel[self.radio_channel] = {self}
+			else
+				table.insert(twins.radio_channel[self.radio_channel], self)
+			end
+		end,
+		onclick = function(self)
+			local channel = twins.radio_channel[self.radio_channel]
+			for k, v in ipairs(channel) do
+				if v.active then
+					v.active = false
+					v:render()
+				end
+			end
+			self.active = true
+			self:render()
+		end
+	},
+	spacing = {
+		visible = false,
+		clickable = false,
+		w = 1, h = 1
 	}
 }
 return elem_base
