@@ -74,7 +74,6 @@ function twins.add_element(element)
 end
 
 function twins.load_elements(module_name, load_as, load_only)
-	
 	local succ, mod
 	if not load_only then
 		succ, mod = pcall(require, module_name)
@@ -120,16 +119,11 @@ function twins.get_element_by_key(key)
 end
 
 function twins.draw_frame(elem)
-	twins.container.set(elem.x, elem.y, "┌")
-	twins.container.set(elem.x+elem.w-1, elem.y, "┐")
-	twins.container.set(elem.x, elem.y+elem.h-1, "└")
-	twins.container.set(elem.x+elem.w-1, elem.y+elem.h-1, "┘")
-
 	local vl = ("│"):rep(elem.h-2)
 	local hl = ("─"):rep(elem.w-2)
 
-	twins.container.set(elem.x, elem.y+1, vl, true)
-	twins.container.set(elem.x+elem.w-1, elem.y+1, vl, true)
+	twins.container.set(elem.x, elem.y, "┌"..vl.."└", true)
+	twins.container.set(elem.x+elem.w-1, elem.y, "┐"..vl.."┘", true)
 	twins.container.set(elem.x+1, elem.y, hl)
 	twins.container.set(elem.x+1, elem.y+elem.h-1, hl)
 end

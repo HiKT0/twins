@@ -11,6 +11,9 @@ function sps.center(e, mode)
 		e.x = cx
 		e.y = cy
 	end
+	if e.calculate_positions then
+		e:calculate_positions()
+	end
 	return e, {x=cx, y=cy}
 end
 

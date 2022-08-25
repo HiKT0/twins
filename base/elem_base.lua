@@ -227,7 +227,7 @@ local elem_base = {
 					twins.container.set(self.x, self.y+line, tostring(i)..wspace)
 				end
 				line = line + 1
-				if line == self.h-1 then
+				if line == self.h then
 					twins.container.set(self.x, self.y+line, "..."..(" "):rep(self.w-3))
 					return
 				end
