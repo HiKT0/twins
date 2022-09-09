@@ -40,7 +40,6 @@ function twins.render(force)
 	if twins.document.title then twins.title(twins.document.title) end
 end
 
-
 function twins.add_element(element)
 	for i=1, #twins.elements+1 do
 		if twins.elements[i] == nil then
@@ -73,6 +72,18 @@ function twins.add_element(element)
 	end
 end
 
+local function deep_copy(t)
+	if type(t) ~= "table" then
+		return t
+	end
+
+	local new_t = {}
+	for k, v in pairs(t) do
+		new_t[k] = deep_copy(v)
+	end
+	return new_t
+end
+
 function twins.load_elements(module_name, load_as, load_only)
 	local succ, mod
 	if not load_only then
@@ -103,7 +114,7 @@ function twins.load_elements(module_name, load_as, load_only)
 		function(t)
 			t = t or {}
 			for k, v in pairs(elem_content) do
-				if not t[k] then t[k] = v end
+				if not t[k] then t[k] = deep_copy(v) end
 			end
 			return twins.add_element(t)
 		end
@@ -230,9 +241,13 @@ function twins.main()
 	twins.connect_listeners()
 	local succ = xpcall(function()
 		twins.clear_screen()
+		twins.render()
 		while twins.running do
-			twins.render()
-			twins.sleep(60)
+			for k, v in ipairs(twins.elements) do
+				twins.sleep(10)
+				v:render()
+				if not twins.running then break end
+			end
 		end
 	end, function(...) err = debug.traceback(...) end)
 	twins.disconnect_listeners()
