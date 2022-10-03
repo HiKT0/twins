@@ -1,8 +1,8 @@
 local sps = {}
 
 function sps.center(e, mode)
-	local cx = (twins.scw-e.w)/2
-	local cy = (twins.sch-e.h)/2
+	local cx = math.floor((twins.scw-e.w)/2)
+	local cy = math.floor((twins.sch-e.h)/2)
 	if mode == 'x' then
 		e.x = cx
 	elseif mode == 'y' then

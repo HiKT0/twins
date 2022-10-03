@@ -40,6 +40,7 @@ function twins.render(force)
 	if twins.document.title then twins.title(twins.document.title) end
 end
 
+
 function twins.add_element(element)
 	for i=1, #twins.elements+1 do
 		if twins.elements[i] == nil then
@@ -83,6 +84,7 @@ local function deep_copy(t)
 	end
 	return new_t
 end
+
 
 function twins.load_elements(module_name, load_as, load_only)
 	local succ, mod
@@ -237,6 +239,8 @@ function twins.sleep(timeout)
 end
 
 function twins.main()
+	local init_bg = twins.container.getBackground()
+	local init_fg = twins.container.getForeground()
 	twins.running = true
 	twins.connect_listeners()
 	local succ = xpcall(function()
@@ -252,10 +256,14 @@ function twins.main()
 	end, function(...) err = debug.traceback(...) end)
 	twins.disconnect_listeners()
 	shutdown_sequence()
+	twins.container.setForeground(init_fg)
+	twins.container.setBackground(init_bg)
 	if not succ then error(err, 3) end
 end
 
 function twins.main_coroutine()
+	local init_bg = twins.container.getBackground()
+	local init_fg = twins.container.getForeground()
 	twins.running = true
 	twins.connect_listeners()
 	local succ, err = xpcall(function()
@@ -268,6 +276,8 @@ function twins.main_coroutine()
 	twins.disconnect_listeners()
 	twins.clear_screen(twins.document.destroy_color)
 	shutdown_sequence()
+	twins.container.setForeground(init_fg)
+	twins.container.setBackground(init_bg)
 	if not succ then error(err, 3) end
 end
 
