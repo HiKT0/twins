@@ -373,6 +373,15 @@ local elem_base = {
 			end
 			self.active = true
 			self:render()
+		end,
+		ondestroy = function(self)
+			local channel = twins.radio_channel[self.radio_channel]
+			for k, v in ipairs(channel) do
+				if v == self then
+					table.remove(channel, k)
+					break
+				end
+			end
 		end
 	},
 	spacing = {

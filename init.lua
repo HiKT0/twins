@@ -258,6 +258,7 @@ function twins.main()
 	shutdown_sequence()
 	twins.container.setForeground(init_fg)
 	twins.container.setBackground(init_bg)
+	twins.clear_elements()
 	if not succ then error(err, 3) end
 end
 
@@ -278,6 +279,7 @@ function twins.main_coroutine()
 	shutdown_sequence()
 	twins.container.setForeground(init_fg)
 	twins.container.setBackground(init_bg)
+	twins.clear_elements()
 	if not succ then error(err, 3) end
 end
 
