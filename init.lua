@@ -43,7 +43,7 @@ function twins.add_element(element)
 	for i=1, #twins.elements+1 do
 		if twins.elements[i] == nil then
 			element = setmetatable({
-				internal=element, 
+				internal=element,
 				render=element.render,
 				getxywh = function(t)
 					return rawget(t.internal, "x"), rawget(t.internal, "y"), 
@@ -110,6 +110,14 @@ function twins.load_elements(module_name, load_as, load_only)
 	end
 	twins[load_as] = {}
 	for elem_name, elem_content in pairs(mod) do
+		if elem_content.render then
+			local _render = elem_content.render
+			local function wrapped_render(self)
+				if twins.running then
+					_render(self)
+				end
+			end
+		end
 		twins[load_as][elem_name] = 
 		function(t)
 			t = t or {}
@@ -124,6 +132,7 @@ function twins.load_elements(module_name, load_as, load_only)
 				)
 				twins.named_elements[prepared_element.key] = prepared_element
 			end
+			prepared_element.render = wrapped_render
 			return prepared_element
 		end
 	end
@@ -192,6 +201,7 @@ end
 
 
 function twins.clear_screen(color)
+	print(twins.scw, twins.sch)
 	twins.container.setForeground(twins.document.fgcolor or 0xffffff)
 	twins.container.setBackground(color or twins.document.bgcolor or 0x000000)
 	twins.container.fill(1, 1, twins.scw, twins.sch, " ")
