@@ -286,7 +286,7 @@ local elem_base = {
 				local w_max = 0
 				for k, v in ipairs(self.items) do
 					v.y = self.y + dy + (v.off_y or 0)
-					v.x = self.x + 1 + (v.off_x or 0)
+					v.x = self.x + self.padding.right + (v.off_x or 0)
 					if v.calculate_positions then
 						v:calculate_positions()
 					end

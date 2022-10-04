@@ -201,6 +201,25 @@ function twins.clear_elements()
 	twins.elements = {}
 end
 
+function twins.use_macros(container)
+	if type(container) ~= "table" then
+		container = _G
+	end
+
+	function container.group(props)
+		return function(items)
+			local g = twins.base.group(props)
+			g.items = items
+			invoke(g, "calculate_positions")
+			return g
+		end
+	end
+
+	container.button = twins.base.button
+	container.text = twins.base.text
+	container.input = twins.base.input
+end
+
 function twins.title(title)
 	twins.container.set(3, 1, "["..title.."]")
 end
