@@ -8,6 +8,7 @@ twins.scw, twins.sch = twins.container.getResolution()
 
 twins.document = {}
 twins.elements = {}
+twins.named_elements = {}
 twins.focus = -1
 
 twins.storage = {}
@@ -33,9 +34,6 @@ function twins.render(force)
 			invoke(v, "render")
 			rawset(v, "changed", false)
 		end
-	end
-	if twins.container.type == "tornado_vs" then
-		twins.draw_frame({x=1, y=1, w=twins.container.internal.width, h=twins.container.internal.height})
 	end
 	if twins.document.title then twins.title(twins.document.title) end
 end
@@ -118,17 +116,21 @@ function twins.load_elements(module_name, load_as, load_only)
 			for k, v in pairs(elem_content) do
 				if not t[k] then t[k] = deep_copy(v) end
 			end
-			return twins.add_element(t)
+			local prepared_element = twins.add_element(t)
+			if t.key ~= nil then
+				assert(
+					twins.named_elements[prepared_element.key] == nil, 
+					"Ошибка при создании элемента с ключом: \""..prepared_element.key .. "\" уже существует"
+				)
+				twins.named_elements[prepared_element.key] = prepared_element
+			end
+			return prepared_element
 		end
 	end
 end
 
 function twins.get_element_by_key(key)
-	for k, v in pairs(twins.elements) do
-		if v.key == key then
-			return v
-		end
-	end
+	return twins.named_elements[key]
 end
 
 function twins.draw_frame(elem)
@@ -199,6 +201,7 @@ twins.load_elements("/lib/twins/base/elem_base.lua", "base", true)
 
 function twins.clear_elements()
 	twins.elements = {}
+	twins.named_elements = {}
 end
 
 function twins.use_macros(container)
@@ -271,6 +274,7 @@ function twins.main()
 				v:render()
 				if not twins.running then break end
 			end
+			twins.sleep(1)
 		end
 	end, function(...) err = debug.traceback(...) end)
 	twins.disconnect_listeners()

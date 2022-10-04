@@ -271,6 +271,7 @@ local elem_base = {
 				local dx = self.padding.left
 				local h_max = 0
 				for k, v in ipairs(self.items) do
+					assert(type(v) == "table", "["..k.."] не является элементом.")
 					v.y = self.y + (v.off_y or 0) + self.padding.up
 					v.x = self.x + dx + (v.off_x or 0)
 					if v.calculate_positions then
@@ -285,6 +286,7 @@ local elem_base = {
 				local dy = self.padding.up
 				local w_max = 0
 				for k, v in ipairs(self.items) do
+					assert(type(v) == "table", "["..k.."] не является элементом.")
 					v.y = self.y + dy + (v.off_y or 0)
 					v.x = self.x + self.padding.right + (v.off_x or 0)
 					if v.calculate_positions then
