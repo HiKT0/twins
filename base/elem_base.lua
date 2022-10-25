@@ -308,6 +308,9 @@ local elem_base = {
 		end,
 		render = function(self) end,
 		oncreate = function(self)
+			if self.align then
+				twins.sps.position(self.align, self)
+			end
 			if self.framed then
 				self.padding = {left=1, right=1, up=1, down=1}
 			end

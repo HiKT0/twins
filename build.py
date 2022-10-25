@@ -15,7 +15,6 @@ for f in files_to_pack:
     file = open(f.replace("\n", ""), encoding="utf-8")
     file_content = file.read()
 
-    # удаление комментариев (с ними не компилится)))
     while True:
         start = file_content.find("--[[")
         if start == -1:
