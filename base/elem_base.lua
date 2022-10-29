@@ -18,7 +18,7 @@ local elem_base = {
 	},
 	text = {
 		x = 1, y = 1,
-		w = 10, h = 1,
+		h = 1,
 		text = "text",
 		fgcolor = 0xffffff,
 		bgcolor = 0x000000,
@@ -28,6 +28,11 @@ local elem_base = {
 			local text = unicode.sub(tostring(self.text), 1, self.w)
 			text = text .. string.rep(" ", self.w-unicode.len(text))
 			twins.container.set(self.x, self.y, text)
+		end,
+		oncreate = function(self)
+			if not self.w then
+				self.w = unicode.len(self.text)
+			end
 		end
 	},
 	checkbox = {
@@ -308,13 +313,15 @@ local elem_base = {
 		end,
 		render = function(self) end,
 		oncreate = function(self)
-			if self.align then
-				twins.sps.position(self.align, self)
-			end
+			print(self.w, self.h, #self.items)
 			if self.framed then
 				self.padding = {left=1, right=1, up=1, down=1}
 			end
 			self:calculate_positions()
+			if self.align then
+				twins.sps.position(self.align, self)
+				self:calculate_positions()
+			end
 			if self.framed and self.linked_frame == nil then
 					self.linked_frame = twins.base.frame({
 					x=self.x, 

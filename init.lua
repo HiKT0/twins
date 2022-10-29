@@ -221,10 +221,8 @@ function twins.use_macros(container)
 
 	function container.group(props)
 		return function(items)
-			local g = twins.base.group(props)
-			g.items = items
-			invoke(g, "calculate_positions")
-			return g
+			props.items = items
+			return twins.base.group(props)
 		end
 	end
 
