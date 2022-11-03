@@ -32,7 +32,7 @@ for f in files_to_pack:
             file_content = file_content[:start]
         else:
             file_content = file_content[:start] + file_content[end:]
-    out += "[\"/lib/twins/" + f.replace("\n", "") + "\"]=\"" + file_content.replace("\\", "\\\\").replace("\\\\n", "\\n").replace("\"", "\\\"").replace("'", "\\'") + "\","
+    out += "[\"/lib/twins/" + f.replace("\n", "") + "\"]=\"" + file_content.replace("\n", "\\n").replace("\\", "\\\\").replace("\\\\n", "\\n").replace("\"", "\\\"").replace("'", "\\'") + "\","
     file.close()
 
 f = open("./install.lua", "w", encoding="utf-8")
