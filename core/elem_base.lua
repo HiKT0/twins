@@ -38,7 +38,7 @@ local elem_base = {
 	checkbox = {
 		x = 1, y = 1,
 		w = 4, h = 3,
-		active_color = 0x00ff48,
+		active_color = 0xcccccc,
 		active = false,
 		bgcolor = 0x000000,
 		fgcolor = 0xffffff,
@@ -313,7 +313,6 @@ local elem_base = {
 		end,
 		render = function(self) end,
 		oncreate = function(self)
-			print(self.w, self.h, #self.items)
 			if self.framed then
 				self.padding = {left=1, right=1, up=1, down=1}
 			end

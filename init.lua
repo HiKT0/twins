@@ -12,7 +12,7 @@ twins.named_elements = {}
 twins.focus = -1
 
 twins.storage = {}
-twins.sps = require("twins.base.sps")
+twins.sps = require("twins.core.sps")
 
 function twins.wake()
 	twins.scw, twins.sch = twins.container.getResolution()
@@ -83,8 +83,7 @@ local function deep_copy(t)
 	return new_t
 end
 
-
-function twins.load_elements(module_name, load_as, load_only)
+local function load_from_file(module_name)
 	local succ, mod
 	if not load_only then
 		succ, mod = pcall(require, module_name)
@@ -108,6 +107,21 @@ function twins.load_elements(module_name, load_as, load_only)
 	if type(mod) == "string" then
 		error(mod)
 	end
+	return mod
+end
+
+
+function twins.load_elements(module_name, load_as, load_only)
+	local mod
+	local mod_type = type(module_name)
+	if mod_type == "string" then
+		mod = load_from_file(module_name)
+	elseif mod_type == "table" then
+		mod = module_name
+	else
+		error("Аргумент типа " .. mod_type .. " не поддерживается")
+	end
+
 	twins[load_as] = {}
 	for elem_name, elem_content in pairs(mod) do
 		if elem_content.render then
@@ -201,13 +215,12 @@ end
 
 
 function twins.clear_screen(color)
-	print(twins.scw, twins.sch)
 	twins.container.setForeground(twins.document.fgcolor or 0xffffff)
 	twins.container.setBackground(color or twins.document.bgcolor or 0x000000)
 	twins.container.fill(1, 1, twins.scw, twins.sch, " ")
 end
 
-twins.load_elements("/lib/twins/base/elem_base.lua", "base", true)
+twins.load_elements("/lib/twins/core/elem_base.lua", "base", true)
 
 function twins.clear_elements()
 	twins.elements = {}
