@@ -292,7 +292,7 @@ function twins.main()
 		while twins.running do
 			for k, v in ipairs(twins.elements) do
 				twins.sleep(10)
-				v:render()
+				invoke(v, "render")
 				if not twins.running then break end
 			end
 			twins.sleep(1)
