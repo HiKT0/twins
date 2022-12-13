@@ -11,6 +11,8 @@ twins.elements = {}
 twins.named_elements = {}
 twins.focus = -1
 
+twins.element_templates = {}
+
 twins.storage = {}
 twins.sps = require("twins.core.sps")
 
@@ -22,6 +24,28 @@ local function invoke(element, method, ...)
 	if type(element[method]) == "function" then
 		element[method](element, ...)
 	end
+end
+
+local function deep_copy(t)
+	if type(t) ~= "table" then
+		return t
+	end
+
+	local new_t = {}
+	for k, v in pairs(t) do
+		new_t[k] = deep_copy(v)
+	end
+	return new_t
+end
+
+function twins.add_template(name, template, parent)
+	if not parent then parent = "*" end
+	if type(twins.element_templates[parent]) == "table" then
+		for k, v in pairs(twins.element_templates[parent]) do
+			if template[k] == nil then template[k] = deep_copy(v) end
+		end
+	end
+	twins.element_templates[name] = template
 end
 
 function twins.get_focus()
@@ -37,7 +61,6 @@ function twins.render(force)
 	end
 	if twins.document.title then twins.title(twins.document.title) end
 end
-
 
 function twins.add_element(element)
 	for i=1, #twins.elements+1 do
@@ -71,18 +94,6 @@ function twins.add_element(element)
 	end
 end
 
-local function deep_copy(t)
-	if type(t) ~= "table" then
-		return t
-	end
-
-	local new_t = {}
-	for k, v in pairs(t) do
-		new_t[k] = deep_copy(v)
-	end
-	return new_t
-end
-
 local function load_from_file(module_name)
 	local succ, mod
 	if not load_only then
@@ -110,6 +121,35 @@ local function load_from_file(module_name)
 	return mod
 end
 
+local function apply_class(element, classname)
+	local class_props = twins.element_templates[classname]
+	for k, v in pairs(class_props) do
+		if not element[k] then element[k] = deep_copy(v) end
+	end
+end
+
+local function build_element(element, template)
+	if element.class ~= nil and twins.element_templates[element.class] then
+		apply_class(element, element.class)
+	elseif twins.element_templates["*"] then
+		apply_class(element, "*")
+	end
+
+	for k, v in pairs(template) do
+		if not element[k] then element[k] = deep_copy(v) end
+	end
+
+	local prepared_element = twins.add_element(element)
+	if element.key ~= nil then
+		assert(
+			twins.named_elements[prepared_element.key] == nil, 
+			"Ошибка при создании элемента с ключом: \""..prepared_element.key .. "\" уже существует"
+		)
+		twins.named_elements[prepared_element.key] = prepared_element
+	end
+	prepared_element.render = wrapped_render
+	return prepared_element
+end
 
 function twins.load_elements(module_name, load_as, load_only)
 	local mod
@@ -135,19 +175,7 @@ function twins.load_elements(module_name, load_as, load_only)
 		twins[load_as][elem_name] = 
 		function(t)
 			t = t or {}
-			for k, v in pairs(elem_content) do
-				if not t[k] then t[k] = deep_copy(v) end
-			end
-			local prepared_element = twins.add_element(t)
-			if t.key ~= nil then
-				assert(
-					twins.named_elements[prepared_element.key] == nil, 
-					"Ошибка при создании элемента с ключом: \""..prepared_element.key .. "\" уже существует"
-				)
-				twins.named_elements[prepared_element.key] = prepared_element
-			end
-			prepared_element.render = wrapped_render
-			return prepared_element
+			return build_element(t, elem_content)
 		end
 	end
 end
@@ -253,6 +281,7 @@ local function shutdown_sequence()
 		invoke(v, "ondestroy")
 		twins.elements[k] = nil
 	end
+	twins.element_templates = {}
 end
 
 local kdid, t_id, scr_id
@@ -290,12 +319,8 @@ function twins.main()
 		twins.clear_screen()
 		twins.render()
 		while twins.running do
-			for k, v in ipairs(twins.elements) do
-				twins.sleep(10)
-				invoke(v, "render")
-				if not twins.running then break end
-			end
-			twins.sleep(1)
+			twins.sleep(math.huge)
+			if not twins.running then break end
 		end
 	end, function(...) err = debug.traceback(...) end)
 	twins.disconnect_listeners()

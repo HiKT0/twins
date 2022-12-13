@@ -311,7 +311,6 @@ local elem_base = {
 				self.linked_frame.h = self.h
 			end
 		end,
-		render = function(self) end,
 		oncreate = function(self)
 			if self.framed then
 				self.padding = {left=1, right=1, up=1, down=1}
