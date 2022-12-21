@@ -6,14 +6,16 @@ twins.container = require("component").gpu
 
 twins.scw, twins.sch = twins.container.getResolution()
 
-twins.document = {}
-twins.elements = {}
-twins.named_elements = {}
+twins.document = nil
+twins.elements = nil
+twins.named_elements = nil
 twins.focus = -1
+twins.element_templates = nil
 
-twins.element_templates = {}
+twins.contexts = {}
+twins.active_context = 1
 
-twins.storage = {}
+
 twins.sps = require("twins.core.sps")
 
 function twins.wake()
@@ -21,10 +23,44 @@ function twins.wake()
 end
 
 local function invoke(element, method, ...)
+	if not element then
+		error(debug.traceback())
+	end
 	if type(element[method]) == "function" then
 		element[method](element, ...)
 	end
 end
+
+function twins.set_context(context_id, silent)
+	if twins.contexts[context_id] == nil then
+		twins.contexts[context_id] = {
+			document={},
+			elements={},
+			named_elements={},
+			element_templates={},
+			focus=-1
+		}
+	end
+
+	local ctx = twins.contexts[context_id]
+	twins.document = ctx.document
+	twins.elements = ctx.elements
+	twins.named_elements = ctx.named_elements
+	twins.focus = ctx.focus
+	twins.element_templates = ctx.element_templates
+
+	twins.active_context = context_id
+end
+
+function twins.show_context(context_id)
+	invoke(twins.document, "onctxinactive")
+	twins.set_context(context_id)
+	invoke(twins.document, "onctxactive")
+	twins.render(true)
+end
+
+twins.set_context(twins.active_context)
+
 
 local function deep_copy(t)
 	if type(t) ~= "table" then
@@ -53,6 +89,7 @@ function twins.get_focus()
 end
 
 function twins.render(force)
+	twins.clear_screen()
 	for k, v in pairs(twins.elements) do
 		if rawget(v, "changed") or force then
 			invoke(v, "render")
@@ -196,10 +233,7 @@ end
 
 local function touch_listener(e_name, addr, x, y, button)
 	local offx, offy = 0, 0
-	if twins.container.type == "tornado_vs" then
-		offx = twins.container.internal.x
-		offy = twins.container.internal.y
-	end
+
 	for k, v in pairs(twins.elements) do
 		local ex, ey, ew, eh = v.getxywh(v)
 		if x-offx >= ex and x-offx < ex + ew and y-offy >= ey and y-offy < ey + eh and v.clickable then
@@ -277,11 +311,14 @@ function twins.title(title)
 end
 
 local function shutdown_sequence()
-	for k, v in pairs(twins.elements) do
-		invoke(v, "ondestroy")
-		twins.elements[k] = nil
+	for ctx_id, ctx in pairs(twins.contexts) do
+		twins.set_context(ctx_id)
+		for k, v in pairs(twins.elements) do
+			invoke(v, "ondestroy")
+			twins.elements[k] = nil
+		end
+		twins.element_templates = {}
 	end
-	twins.element_templates = {}
 end
 
 local kdid, t_id, scr_id
@@ -311,6 +348,7 @@ function twins.sleep(timeout)
 end
 
 function twins.main()
+	twins.set_context(1)
 	local init_bg = twins.container.getBackground()
 	local init_fg = twins.container.getForeground()
 	twins.running = true
@@ -327,11 +365,19 @@ function twins.main()
 	shutdown_sequence()
 	twins.container.setForeground(init_fg)
 	twins.container.setBackground(init_bg)
-	twins.clear_elements()
+
+	for k, v in pairs(twins.contexts) do
+		twins.set_context(k)
+		twins.clear_elements()
+	end
+	twins.contexts = {}
+	twins.set_context(1)
+
 	if not succ then error(err, 3) end
 end
 
 function twins.main_coroutine()
+	twins.set_context(1)
 	local init_bg = twins.container.getBackground()
 	local init_fg = twins.container.getForeground()
 	twins.running = true
@@ -348,7 +394,14 @@ function twins.main_coroutine()
 	shutdown_sequence()
 	twins.container.setForeground(init_fg)
 	twins.container.setBackground(init_bg)
-	twins.clear_elements()
+
+	for k, v in pairs(twins.contexts) do
+		twins.set_context(k)
+		twins.clear_elements()
+	end
+	twins.contexts = {}
+	twins.set_context(1)
+
 	if not succ then error(err, 3) end
 end
 

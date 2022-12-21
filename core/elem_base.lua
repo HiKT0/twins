@@ -30,6 +30,9 @@ local elem_base = {
 			twins.container.set(self.x, self.y, text)
 		end,
 		oncreate = function(self)
+			self:adjust_width()
+		end,
+		adjust_width = function(self)
 			if not self.w then
 				self.w = unicode.len(self.text)
 			end
@@ -67,12 +70,13 @@ local elem_base = {
 		allowed_chars = "",
 		text="",
 		password=false,
+		creation_ctx = -1,
 		render = function(self)
 			while self.cursor-self.view > self.w-1 do
 				self.view = self.view + 1
 			end
-			while self.cursor-self.view < 0 do
-				self.view = self.view - 1
+			if self.cursor-self.view < 0 then
+				self.view = self.cursor
 			end
 			if self.view < 1 then self.view = 1 end
 			twins.container.setBackground(self.bgcolor)
@@ -114,9 +118,12 @@ local elem_base = {
 			self.draw_cursor(self) 
 		end,
 		oncreate = function(self)
+			self.creation_ctx = twins.active_context
 			self.blinker_t = event.timer(0.5, 
 				function()
-					self.draw_cursor(self)
+					if twins.active_context == self.creation_ctx then
+						self:draw_cursor()
+					end
 				end,
 				math.huge)
 			self.cursor = unicode.len(self.text) + 1
@@ -127,21 +134,28 @@ local elem_base = {
 		ovr_lets = {
 			[8] = 
 			function(self, let, key)
-				self.text = unicode.sub(self.text, 1, self.cursor-2) .. unicode.sub(self.text, self.cursor, unicode.len(self.text))
-				self.cursor = self.cursor - 1
-				if self.cursor < 1 then
-					self.cursor = 1
+				if self.cursor > 1 then
+					self.text = unicode.sub(self.text, 1, self.cursor-2) .. unicode.sub(self.text, self.cursor, unicode.len(self.text))
+					self.cursor = self.cursor - 1
+					if self.cursor < 1 then
+						self.cursor = 1
+					end
+					if self.cursor-self.view < 2 then
+						self.view = self.cursor - 2
+					end
+					self.render(self)
 				end
-				while self.cursor-self.view < 1 do
-					self.view = self.view - 1
-				end
-				self.render(self)
 			end,
 			[13] =
 			function(self, let, key)
 				if self.onconfirm then
 					self.onconfirm(self)
 				end
+			end,
+			[127] = 
+			function(self, let, key)
+				self.text = unicode.sub(self.text, 1, self.cursor-1) .. unicode.sub(self.text, self.cursor+1, unicode.len(self.text))
+				self.render(self)
 			end
 		},
 		ovr_keys = {
