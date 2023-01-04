@@ -89,6 +89,7 @@ local elem_base = {
 		text="",
 		password=false,
 		creation_ctx = -1,
+		max_length = math.huge,
 		render = function(self)
 			while self.cursor-self.view > self.w-1 do
 				self.view = self.view + 1
@@ -195,14 +196,16 @@ local elem_base = {
 			end
 		},
 		typechar = function(self, let, key)
-			self.text = (unicode.sub(self.text, 1, self.cursor-1) ..
-				unicode.char(let) .. 
-				unicode.sub(self.text, self.cursor, unicode.len(self.text))
-				)
-			self.cursor = self.cursor + 1
-			self.render(self)
+			if unicode.len(self.text) < self.max_length then
+				self.text = (unicode.sub(self.text, 1, self.cursor-1) ..
+					unicode.char(let) .. 
+					unicode.sub(self.text, self.cursor, unicode.len(self.text))
+					)
+				self.cursor = self.cursor + 1
+				self.render(self)
 
-			if self.onmodify then self.onmodify(self) end
+				if self.onmodify then self.onmodify(self) end
+			end
 		end,
 		onkeydown = function(self, let, key)
 			if self.ovr_lets[let] then
