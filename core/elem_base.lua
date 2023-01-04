@@ -20,14 +20,32 @@ local elem_base = {
 		x = 1, y = 1,
 		h = 1,
 		text = "text",
+		align = "left",
 		fgcolor = 0xffffff,
 		bgcolor = 0x000000,
 		render = function(self)
 			twins.container.setForeground(self.fgcolor)
 			twins.container.setBackground(self.bgcolor)
-			local text = unicode.sub(tostring(self.text), 1, self.w)
-			text = text .. string.rep(" ", self.w-unicode.len(text))
-			twins.container.set(self.x, self.y, text)
+			
+			if self.align == "left" then
+				local text = unicode.sub(tostring(self.text), 1, self.w)
+				text = text .. string.rep(" ", self.w-unicode.len(text))
+				twins.container.set(self.x, self.y, text)
+			elseif self.align == "center" then
+
+				local rel_x = math.floor(self.w/2-unicode.len(self.text)/2)
+				local rel_h = math.floor(self.h/2)
+				local left_pad = string.rep(" ", rel_x - 1)
+				local right_pad = string.rep(" ", self.w - rel_x - 1)
+
+				local text = left_pad .. self.text .. right_pad
+
+				twins.container.set(self.x, self.y, text)
+			elseif self.align == "right" then
+				local text = unicode.sub(tostring(self.text), 1, self.w)
+				text = string.rep(" ", self.w-unicode.len(text)) .. text
+				twins.container.set(self.x, self.y, text)
+			end
 		end,
 		oncreate = function(self)
 			self:adjust_width()
