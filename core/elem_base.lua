@@ -36,7 +36,7 @@ local elem_base = {
 				local rel_x = math.floor(self.w/2-unicode.len(self.text)/2)
 				local rel_h = math.floor(self.h/2)
 				local left_pad = string.rep(" ", rel_x - 1)
-				local right_pad = string.rep(" ", self.w - rel_x - 1)
+				local right_pad = string.rep(" ", self.w - rel_x - unicode.len(self.text) - 1)
 
 				local text = left_pad .. self.text .. right_pad
 
@@ -417,6 +417,7 @@ local elem_base = {
 				end
 			end
 			self.active = true
+			if self.onselected then self:onselected() end
 			self:render()
 		end,
 		ondestroy = function(self)
