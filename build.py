@@ -1,4 +1,5 @@
 import os
+import re
 
 # files_to_pack = []
 # for root, sub_dirs, files in os.walk("./src"):
@@ -32,7 +33,8 @@ for f in files_to_pack:
             file_content = file_content[:start]
         else:
             file_content = file_content[:start] + file_content[end:]
-    out += "[\"/lib/twins/" + f.replace("\n", "") + "\"]=\"" + file_content.replace("\n", "\\n").replace("\\", "\\\\").replace("\\\\n", "\\n").replace("\"", "\\\"").replace("'", "\\'") + "\","
+    whitespace = re.compile(r"\n*\s+")
+    out += "[\"/lib/twins/" + f.replace("\n", "") + "\"]=\"" + whitespace.subn(" ", file_content)[0].replace("\\", "\\\\").replace("\\\\n", "\\n").replace("\"", "\\\"").replace("'", "\\'") + "\","
     file.close()
 
 f = open("./install.lua", "w", encoding="utf-8")

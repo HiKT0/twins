@@ -1,8 +1,8 @@
 local sps = {}
 
 function sps.center(e, mode)
-	local cx = math.floor((twins.scw-e.w)/2)
-	local cy = math.floor((twins.sch-e.h)/2)
+	local cx = math.floor((twins.sem.scw-e.w)/2)
+	local cy = math.floor((twins.sem.sch-e.h)/2)
 	if mode == 'x' then
 		e.x = cx
 	elseif mode == 'y' then
@@ -18,7 +18,7 @@ function sps.center(e, mode)
 end
 
 function sps.right(e)
-	local rx = twins.scw-e.w-1
+	local rx = twins.sem.scw-e.w-1
 	e.x = rx
 	if e.calculate_positions then
 		e:calculate_positions()
@@ -45,7 +45,7 @@ function sps.up(e)
 end
 
 function sps.down(e)
-	local dy = twins.sch-e.h
+	local dy = twins.sem.sch-e.h
 	e.y = dy
 	if e.calculate_positions then
 		e:calculate_positions()
@@ -66,7 +66,7 @@ local function pos_list(list, dir, fun)
 			end
 		end
 	else
-		local ly = twins.sch
+		local ly = twins.sem.sch
 		for k, e in pairs(list) do
 			ly = ly - e.h
 			fun(e)

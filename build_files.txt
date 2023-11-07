@@ -1,3 +1,7 @@
 init.lua
 core/elem_base.lua
 core/sps.lua
+core/sem.lua
+core/util.lua
+core/elements_helper.lua
+core/graphics_helper.lua
