@@ -5,3 +5,4 @@ core/sem.lua
 core/util.lua
 core/elements_helper.lua
 core/graphics_helper.lua
+core/render_device.lua
